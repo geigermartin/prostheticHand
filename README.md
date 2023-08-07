@@ -2,19 +2,24 @@
 # **Prosthetic hand**
 The goal of this project was to build a prosthetic hand. Over time I extended it way beyond that initial intent. At this stage, the project entails the prosthetic hand, a Linux GUI, an Android app (not yet in this repo), and 4 distinct possibilities for controlling the prosthetic via the GUI. These control modes are:
 
-**Servos**: Direct control of each of the 6 servos individually. Possible values for the index, middle, ring, and pinky fingers are in the interval [0,180], where 0 is full flexion and 180 is full extension. To avoid possible collisions of the thumb with the index finger, the thumbs’ maximal flexion is limited to 60, therefore the thumb servos' control interval is [60,180]. For the wrist, pronation is 180 and supination is 0.
+#### Servos
+Direct control of each of the 6 servos individually. Possible values for the index, middle, ring, and pinky fingers are in the interval [0,180], where 0 is full flexion and 180 is full extension. To avoid possible collisions of the thumb with the index finger, the thumbs’ maximal flexion is limited to 60, therefore the thumb servos' control interval is [60,180]. For the wrist, pronation is 180 and supination is 0.
 ![servos](/img/servos.jpg)
 
-**Gestures**: It's possible to choose one of currently 17 predefined gestures. When selecting a gesture it will be executed. After 5 s the prosthetic hand will move back to the neutral position to avoid being under tension unnecessarily long.
+#### Gestures
+It's possible to choose one of currently 17 predefined gestures. When selecting a gesture it will be executed. After 5 s the prosthetic hand will move back to the neutral position to avoid being under tension unnecessarily long.
 ![gestures](/img/gestures.jpg)
 
-**EMG**: I implemented this part to give an intuition of how prosthetics that are actually in use nowadays work. These are of course significantly more sophisticated. The principle that users are often required to learn arbitrary mappings between muscle contractions and prosthetic hand movements holds, however. And making all of this much more intuitive is an incredibly important aspect of research in this field (imho). Again, I am aware that multi-electrode systems with machine learning, targeted muscle reinnervation (TMR), etc. exist. Now let's go on to how I implemented the EMG control as a state machine here. Contracting the muscle once closes the hand, contracting it twice in quick succession (i.e. 2 supra-threshold contractions within 500 ms) opens the hand. It is furthermore possible to switch the state from controlling hand opening and closing to controlling wrist pronation and supination. Switching between these states is achieved by holding a supra-threshold contraction for 2 s. In this state, one contraction results in wrist pronation, while 2 quick contractions (again within 500 ms) result in supination. Holding another supra-threshold contraction for at least 2 s then switches back to controlling hand opening and closing. The threshold value that has to be surpassed can be controlled with a slider in the GUI to quickly adapt to a person's individual EMG signal, which is dependent on factors such as environmental noise, skin moisture, contraction force, etc.
+#### EMG
+I implemented this part to give an intuition of how prosthetics that are actually in use nowadays work. These are of course significantly more sophisticated. The principle that users are often required to learn arbitrary mappings between muscle contractions and prosthetic hand movements holds, however. And making all of this much more intuitive is an incredibly important aspect of research in this field (imho). Again, I am aware that multi-electrode systems with machine learning, targeted muscle reinnervation (TMR), etc. exist. Now let's go on to how I implemented the EMG control as a state machine here. Contracting the muscle once closes the hand, contracting it twice in quick succession (i.e. 2 supra-threshold contractions within 500 ms) opens the hand. It is furthermore possible to switch the state from controlling hand opening and closing to controlling wrist pronation and supination. Switching between these states is achieved by holding a supra-threshold contraction for 2 s. In this state, one contraction results in wrist pronation, while 2 quick contractions (again within 500 ms) result in supination. Holding another supra-threshold contraction for at least 2 s then switches back to controlling hand opening and closing. The threshold value that has to be surpassed can be controlled with a slider in the GUI to quickly adapt to a person's individual EMG signal, which is dependent on factors such as environmental noise, skin moisture, contraction force, etc.
 ![emg](/img/emg.jpg)
 
-**Motion capture:** The fourth control mode is moCap. The prosthetic hand replicates finger flexion and extension that are tracked through the laptop's webcam. Here, I integrated an OpenCV implementation for motion capture. A stream of five integers is continuously sent to the Arduino. A '1' indicates that the finger is extended while a '0' is sent when a finger is flexed.
+#### Motion capture
+The fourth control mode is moCap. The prosthetic hand replicates finger flexion and extension that are tracked through the laptop's webcam. Here, I integrated an OpenCV implementation for motion capture. A stream of five integers is continuously sent to the Arduino. A '1' indicates that the finger is extended while a '0' is sent when a finger is flexed.
 ![moCap](/img/moCap.jpg)
 
-*Arduino CLI*: Whenever the user switches between the four control modes in the GUI by clicking one of the buttons in the top panel, the corresponding sketch is uploaded to the Arduino through the command line interface (CLI).
+#### Arduino CLI
+Whenever the user switches between the four control modes in the GUI by clicking one of the buttons in the top panel, the corresponding sketch is uploaded to the Arduino through the command line interface (CLI).
 ## Usage
 Navigate in a shell to the current project.
 ```console
@@ -54,4 +59,5 @@ Run 'prostheticHand.py' to use the GUI (I'm running it in VSCode).
 - i2_FingersMoldX5V3.stl: Remove part of the lid because the silicone didn't dry
 - i2_FingersTipX5V2.stl: Moved the hole for the screw where the springs are attached because it kept breaking at the very small plastic part below
 - i2_WristGearV1.stl: Made the spikes of the part that gets attached to the servo fit the servo gear better, because they wore off too easily.
+
 (2) https://www.youtube.com/watch?v=7KV5489rL3c
