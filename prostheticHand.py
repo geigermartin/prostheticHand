@@ -173,13 +173,13 @@ class MainWindow(QWidget):
             #arduino_sketch = "servoTest"
             arduino_sketch = "manualControl"
         elif whichSketch == "emgControl":
-            arduino_sketch = "emgControl1"
+            arduino_sketch = "emgControl"
         elif whichSketch == "mocapControl":
             arduino_sketch = "motionCapture"
 
         # Use arduino cli (command line interface) to compile & upload arduino sketches
-        os.system(f'{arduino_cli_path} compile --fqbn {arduino_board} ../../Arduino/{arduino_sketch}')
-        os.system(f'{arduino_cli_path} upload -p {self.arduino_port} --fqbn {arduino_board} ../../Arduino/{arduino_sketch}')
+        os.system(f'{arduino_cli_path} compile --fqbn {arduino_board} ./{arduino_sketch}')
+        os.system(f'{arduino_cli_path} upload -p {self.arduino_port} --fqbn {arduino_board} ./{arduino_sketch}')
         print("uploaded "+arduino_sketch)
         
     # Manual Control ----------------------------------------------------------------------------------------------------------------------------------------
@@ -381,19 +381,6 @@ class MainWindow(QWidget):
         self.layout.addWidget(self.groupGestures, 3, 1, 4, 3)
         self.gesturesLayout = QGridLayout()
         self.groupGestures.setLayout(self.gesturesLayout)
-        #self.groupGestures.setStyleSheet("""QLabel {font-size: 22px}""")
-        # self.groupbasicGestures = QGroupBox("Basic")
-        # self.gesturesLayout.addWidget(self.groupbasicGestures, 0, 0, 8, 1, Qt.AlignmentFlag.AlignTop)
-        # self.gesturesbasicLayout = QGridLayout()
-        # self.groupbasicGestures.setLayout(self.gesturesbasicLayout)
-        # self.groupadvancedGestures = QGroupBox("Advanced")
-        # self.gesturesLayout.addWidget(self.groupadvancedGestures, 0, 1, 8, 1, Qt.AlignmentFlag.AlignTop)
-        # self.gesturesadvancedLayout = QGridLayout()
-        # self.groupadvancedGestures.setLayout(self.gesturesadvancedLayout)
-        # self.grouprpsGestures = QGroupBox("Rock-Paper-Scissor")
-        # self.gesturesLayout.addWidget(self.grouprpsGestures, 0, 2, 8, 1, Qt.AlignmentFlag.AlignTop)
-        # self.gesturesrpsLayout = QGridLayout()
-        # self.grouprpsGestures.setLayout(self.gesturesrpsLayout)
         
         self.basic_label = QLabel("Basic")
         self.basic_label.setStyleSheet("""font-size: 20px; border: 10px groove #dab98f;""")
@@ -443,15 +430,12 @@ class MainWindow(QWidget):
         gesture12 = QRadioButton("Bang")
         gesture12.pressed.connect(self.gesture)
         self.gesturesLayout.addWidget(gesture12,4,1)
-        gesture13 = QRadioButton("Little finger up")
-        gesture13.pressed.connect(self.gesture)
-        self.gesturesLayout.addWidget(gesture13,5,1)
         gesture14 = QRadioButton("Heavy metal")
         gesture14.pressed.connect(self.gesture)
-        self.gesturesLayout.addWidget(gesture14,6,1)
+        self.gesturesLayout.addWidget(gesture14,5,1)
         gesture15 = QRadioButton("Call me")
         gesture15.pressed.connect(self.gesture)
-        self.gesturesLayout.addWidget(gesture15,7,1)
+        self.gesturesLayout.addWidget(gesture15,6,1)
         gesture16 = QRadioButton("Rock")
         gesture16.pressed.connect(self.gesture)
         self.gesturesLayout.addWidget(gesture16,0,2)
@@ -464,38 +448,6 @@ class MainWindow(QWidget):
 
     def gesture(self):
         self.arduinoComGestures()
-
-        # if self.sender().text() == ("Hand open" or "Paper"):
-        #     servos = [180,180,180,180,180,180]
-        # elif self.sender().text() == ("Hand closed" or "Rock"):
-        #     servos = [60,0,0,0,0,180]
-        # elif self.sender().text() == ("Peace" or "Scissor"):
-        #     servos = [60,180,180,0,0,180]
-        # elif self.sender().text() == "Spiderman":
-        #     servos = [180,180,0,0,180,180]
-        # elif self.sender().text() == "Thumbs Up":
-        #     servos = [180,0,0,0,0,100]
-        # elif self.sender().text() == "Point in direction":
-        #     servos = [60,180,0,0,0,180]
-        # elif self.sender().text() == "One":
-        #     servos = [180,0,0,0,0,180]
-        # elif self.sender().text() == "Two":
-        #     servos = [180,180,0,0,0,180]
-        # elif self.sender().text() == "Three":
-        #     servos = [180,180,180,0,0,180]
-        # elif self.sender().text() == "Four":
-        #     servos = [180,180,180,180,0,180]
-        # elif self.sender().text() == "Five":
-        #     servos = [180,180,180,180,180,180]
-        # elif self.sender().text() == "Bang":
-        #     servos = [180,180,180,0,0,100]
-        # elif self.sender().text() == "Little finger up":
-        #     servos = [60,0,0,0,180,180]
-        # elif self.sender().text() == "Heavy metal":
-        #     servos = [60,180,0,0,180,180]
-        # elif self.sender().text() == "Call me":
-        #     servos = [180,0,0,0,180,180]
-
         #self.moveServoSliders(servos) # this would move the servo sliders according to the gesture, but currently leads to an unwanted second execution of the gesture
         QtTest.QTest.qWait(5000)
         #servos = [180,180,180,180,180,180]
