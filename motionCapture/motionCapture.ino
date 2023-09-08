@@ -16,8 +16,8 @@ String receivedString;
 
 void setup() {
   Serial.begin(9600);
-  servoThumb.attach(4);
-  servoIndex.attach(2);
+  servoThumb.attach(2);
+  servoIndex.attach(4);
   servoMiddle.attach(6);
   servoRing.attach(8);
   servoPinky.attach(10);

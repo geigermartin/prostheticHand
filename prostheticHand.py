@@ -112,7 +112,7 @@ class MainWindow(QWidget):
 
         # Image ------------------------------------------------------------------------------------------------------------------------------------------------
         label = QLabel(self)
-        pixmap = QPixmap('inmoov_no_bg.png')
+        pixmap = QPixmap('./img/inmoov_no_bg.png')
         label.setPixmap(pixmap.scaled(700, 700, Qt.AspectRatioMode.KeepAspectRatio)) # resize image (otherwise: label.setPixmap(pixmap))
         self.layout.addWidget(label, 2, 0, 6, 1, Qt.AlignmentFlag.AlignCenter)      
 
@@ -173,7 +173,7 @@ class MainWindow(QWidget):
             #arduino_sketch = "servoTest"
             arduino_sketch = "manualControl"
         elif whichSketch == "emgControl":
-            arduino_sketch = "emgControl"
+            arduino_sketch = "emgControl123"
         elif whichSketch == "mocapControl":
             arduino_sketch = "motionCapture"
 

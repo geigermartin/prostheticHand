@@ -1,4 +1,4 @@
-name: qt
+name: prostheticHand
 channels:
   - defaults
 dependencies:
