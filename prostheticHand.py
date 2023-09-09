@@ -4,6 +4,7 @@ from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal
 from PyQt6.QtGui import QIcon, QPixmap, QImage
 from PyQt6 import QtTest
 import sys
+import math
 import serial
 import time
 import matplotlib
@@ -15,6 +16,7 @@ from cvzone.HandTrackingModule import HandDetector
 from cvzone.SerialModule import SerialObject
 import serial.tools.list_ports
 import os
+import mediapipe as mp
 
 class MplCanvas(FigureCanvas):
 
@@ -170,12 +172,11 @@ class MainWindow(QWidget):
         arduino_board = "arduino:avr:mega"
 
         if whichSketch == "manualControl":
-            #arduino_sketch = "servoTest"
             arduino_sketch = "manualControl"
         elif whichSketch == "emgControl":
             arduino_sketch = "emgControl123"
         elif whichSketch == "mocapControl":
-            arduino_sketch = "motionCapture"
+            arduino_sketch = "moCapCon"
 
         # Use arduino cli (command line interface) to compile & upload arduino sketches
         os.system(f'{arduino_cli_path} compile --fqbn {arduino_board} ./{arduino_sketch}')
@@ -625,15 +626,24 @@ class Worker(QThread):
         # Hand tracking
         self.detector = HandDetector(maxHands=1, detectionCon=1)
         # Arduino
-        self.arduino = SerialObject("/dev/ttyACM0", 9600,1) # <- change to be able to use other port
-    
+        self.arduino = SerialObject("/dev/ttyACM0", 9600,3) # <- change to be able to use other port
+        # Range of finger movements
+        self.maxDistances = [None] * 5
+        self.minDistances = [None] * 5
+        self.maxBoxW = 0
+        self.maxBoxH = 0
+        self.minBoxW = 0
+        self.minBoxH = 0
+        self.commandExecuted = False
+        self.counter = 0
+
     def run(self):
         self.ThreadActive = True
         Capture = cv2.VideoCapture(0)
         while self.ThreadActive:
             # Get image frame
             success, img = self.cap.read()
-        
+
             # Find the hand and its landmarks
             img = self.detector.findHands(img)
             lmList, bbox = self.detector.findPosition(img)
@@ -641,12 +651,76 @@ class Worker(QThread):
             fps = 1 / (self.cTime - self.pTime)
             self.pTime = self.cTime
 
-            # Check how many fingers are up
+            # Achieve continuous motion capture of finger movements -------------------------------------------------
+            if lmList:
+                nfingers = 5
+                distance = [None] * nfingers
+                # Get distance between landmarks
+                distance[0] = int(self.detector.findDistance(4,17,img,False)[0])
+                distance[1] = int(self.detector.findDistance(8,0,img,False)[0])
+                distance[2] = int(self.detector.findDistance(12,0,img,False)[0])
+                distance[3] = int(self.detector.findDistance(16,0,img,False)[0])
+                distance[4] = int(self.detector.findDistance(20,0,img,False)[0])
+
+                self.counter += 1
+
+                for i in range(nfingers):
+                    # First frame - just assign values
+                    if not self.commandExecuted:
+                        self.maxDistances = distance
+                        self.minDistances = [x-1 for x in distance]
+                        print(self.maxDistances)
+                        print(self.minDistances)
+                        self.commandExecuted = True
+                        break
+                    
+                    print("counter: ",self.counter)
+                    # This counteracts (slow) movement relative to the camera plane. Imagine you open your hand right in front of the camera and then move it away, then the distance between the two landmarks used for determining finger flexion is also getting smaller. Therefore minDistance and maxDistance need to adapt for this. Adjust '%100' in the line above to control how often it happens. Additionally, the two next lines determine how adaptive this is.  
+                    if self.counter % 100 == 0:
+                        self.maxDistances[i] = self.maxDistances[i] * 0.8
+                        self.minDistances[i] = self.minDistances[i] * 1.1
+                    # Keep track of full finger flexion and extension
+                    elif distance[i] > self.maxDistances[i]:
+                        self.maxDistances[i] = distance[i]
+                    elif distance[i] < self.minDistances[i]:
+                        self.minDistances[i] = distance[i]
+
+                    # Normalize to range of servos [0,180]
+                    normalized_distances = []
+                    for j in range(nfingers):
+                        # To prevent a bug that occurs sometimes
+                        if (self.maxDistances[j] - self.minDistances[j]) <= 0:
+                            self.maxDistances[j] *= 1.2
+                            self.minDistances[j] *= 0.7
+                            break
+                        # Normalize thumb to value between 85 and 180
+                        if j == 0:
+                            normalized_value = 85 + (180-85) * (distance[j] - self.minDistances[j]) / (self.maxDistances[j] - self.minDistances[j])
+                        # Normalize all other fingers to a value between 0 and 180
+                        else:
+                            normalized_value = 180 * (distance[j] - self.minDistances[j]) / (self.maxDistances[j] - self.minDistances[j])
+                        
+                        # Append the normalized value to the list
+                        normalized_distances.append(int(normalized_value))
+                    
+                    # Chnage the value such that it's always made of three integers, e.g. 130 ist 130 but 27 becomes 027
+                    normalized_distances = [f"{value:03d}" for value in normalized_distances]
+               
+                if self.counter > 1: # and not self.counter % 100 == 0:
+                    self.arduino.sendData(normalized_distances) # Send data to Arduino
+
+            # --------------------------------------------------------------------------------------------------
+            # Discrete motion capture of finger movements (check how many fingers are up or down)
             if lmList:
                 fingers = self.detector.fingersUp()
                 #print(fingers)
-                self.arduino.sendData(fingers) # Send data to Arduino
+                #self.arduino.sendData(fingers) # Send data to Arduino
 
+                # To switch back to the discrete finger detection: 1) in l. 179 Use sketch "moCap"
+                #                                                  2) Comment out 9 lines above and insted comment in 4 lines above --> change what is sent to Arduino
+
+            # --------------------------------------------------------------------------------------------------
+            
             if success:
                 Image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
                 FlippedImage = cv2.flip(Image, 1)

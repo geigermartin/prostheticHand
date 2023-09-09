@@ -15,7 +15,7 @@ I implemented this part to give an intuition of how prosthetics that are actuall
 ![emg](/img/emg.jpg)
 
 #### Motion capture
-The fourth control mode is moCap. The prosthetic hand replicates finger flexion and extension that are tracked through the laptop's webcam. Here, I integrated an OpenCV implementation for motion capture. A stream of five integers is continuously sent to the Arduino. A '1' indicates that the finger is extended while a '0' is sent when a finger is flexed.
+The fourth control mode is moCap. The prosthetic hand replicates finger flexion and extension that are tracked through the laptop's webcam. Here, I integrated an OpenCV implementation for motion capture. If discrete detection is used, a stream of five integers is continuously sent to the Arduino, where a '1' indicates that the finger is extended while a '0' is sent when a finger is flexed. Recently I implemented the continuous (=proportional) tracking of finger movements. (To go back to discrete a few things have to be changed.)
 ![moCap](/img/moCap.jpg)
 
 #### Arduino CLI
