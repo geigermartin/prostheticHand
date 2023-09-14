@@ -674,9 +674,8 @@ class Worker(QThread):
                         self.commandExecuted = True
                         break
                     
-                    print("counter: ",self.counter)
                     # This counteracts (slow) movement relative to the camera plane. Imagine you open your hand right in front of the camera and then move it away, then the distance between the two landmarks used for determining finger flexion is also getting smaller. Therefore minDistance and maxDistance need to adapt for this. Adjust '%100' in the line above to control how often it happens. Additionally, the two next lines determine how adaptive this is.  
-                    if self.counter % 100 == 0:
+                    if self.counter % 50 == 0:
                         self.maxDistances[i] = self.maxDistances[i] * 0.8
                         self.minDistances[i] = self.minDistances[i] * 1.1
                     # Keep track of full finger flexion and extension
@@ -703,10 +702,7 @@ class Worker(QThread):
                         # Append the normalized value to the list
                         normalized_distances.append(int(normalized_value))
                     
-                    # Chnage the value such that it's always made of three integers, e.g. 130 ist 130 but 27 becomes 027
-                    normalized_distances = [f"{value:03d}" for value in normalized_distances]
-               
-                if self.counter > 1: # and not self.counter % 100 == 0:
+                if self.counter > 1 and not self.counter % 50 == 0:
                     self.arduino.sendData(normalized_distances) # Send data to Arduino
 
             # --------------------------------------------------------------------------------------------------
