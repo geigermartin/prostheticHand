@@ -94,7 +94,7 @@ void loop() {
       servoPos[4] = 180;
       servoPos[5] = 180;    
     }
-    else if (arduinoIn.substring(2) == "Thumbs Up>"){
+    else if (arduinoIn.substring(2) == "Thumbs up>"){
       servoPos[0] = 180;
       servoPos[1] = 0;
       servoPos[2] = 0;

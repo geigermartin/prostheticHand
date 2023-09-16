@@ -179,7 +179,7 @@ int filt(int emgValue){
   highpass = emgValue - EMA_S_low; //find the high-pass as before (for comparison)
   bandpass = EMA_S_high - EMA_S_low; //find the band-pass
 
-  applyFilter = emgValue;  // Choose which filter will be applied. Return 'emgValue' to not apply any filter.
+  applyFilter = EMA_S_low;  // Choose which filter will be applied. Return 'emgValue' to not apply any filter.
   return applyFilter;
 }
 

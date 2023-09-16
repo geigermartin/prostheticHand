@@ -1,5 +1,5 @@
 #include <Servo.h>
-#define numOfValsRec 5
+#define numOfValsRec 6
 #define digitsPerValRec 3
 
 Servo servoThumb;
@@ -7,6 +7,7 @@ Servo servoIndex;
 Servo servoMiddle;
 Servo servoRing;
 Servo servoPinky;
+Servo servoWrist;
 
 int valsRec[numOfValsRec];
 int stringLength = numOfValsRec * digitsPerValRec + 1;
@@ -21,6 +22,7 @@ void setup() {
   servoMiddle.attach(6);
   servoRing.attach(8);
   servoPinky.attach(10);
+  servoWrist.attach(12);
 }
 
 void receiveData(){
@@ -50,14 +52,10 @@ void receiveData(){
 
 void loop() {
   receiveData();
-  int thumb = valsRec[0];
-  int index = valsRec[1];
-  int middle = valsRec[2];
-  int ring = valsRec[3];
-  int pinky = valsRec[4];
-  servoThumb.write(thumb);
-  servoIndex.write(index);
-  servoMiddle.write(middle);
-  servoRing.write(ring);
-  servoPinky.write(pinky);
+  servoThumb.write(valsRec[0]);
+  servoIndex.write(valsRec[1]);
+  servoMiddle.write(valsRec[2]);
+  servoRing.write(valsRec[3]);
+  servoPinky.write(valsRec[4]);
+  servoWrist.write(valsRec[5]);
 }

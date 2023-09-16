@@ -653,7 +653,7 @@ class Worker(QThread):
 
             # Achieve continuous motion capture of finger movements -------------------------------------------------
             if lmList:
-                nfingers = 5
+                nfingers = 6
                 distance = [None] * nfingers
                 # Get distance between landmarks
                 distance[0] = int(self.detector.findDistance(4,17,img,False)[0])
@@ -661,7 +661,11 @@ class Worker(QThread):
                 distance[2] = int(self.detector.findDistance(12,0,img,False)[0])
                 distance[3] = int(self.detector.findDistance(16,0,img,False)[0])
                 distance[4] = int(self.detector.findDistance(20,0,img,False)[0])
+                distance[5],img_unused,lm_rotation = self.detector.findDistance(5,17,img,False)
 
+                if lm_rotation[0] <= lm_rotation[2]:
+                    distance[5] = -1 * distance[5]
+                
                 self.counter += 1
 
                 for i in range(nfingers):
@@ -677,13 +681,16 @@ class Worker(QThread):
                     # This counteracts (slow) movement relative to the camera plane. Imagine you open your hand right in front of the camera and then move it away, then the distance between the two landmarks used for determining finger flexion is also getting smaller. Therefore minDistance and maxDistance need to adapt for this. Adjust '%100' in the line above to control how often it happens. Additionally, the two next lines determine how adaptive this is.  
                     if self.counter % 50 == 0:
                         self.maxDistances[i] = self.maxDistances[i] * 0.8
-                        self.minDistances[i] = self.minDistances[i] * 1.1
+                        if i < 5:
+                            self.minDistances[i] = self.minDistances[i] * 1.1
+                        else:
+                            self.minDistances[i] = self.minDistances[i] * 0.8 # minDistance for wrist should go towards zero instead
                     # Keep track of full finger flexion and extension
                     elif distance[i] > self.maxDistances[i]:
                         self.maxDistances[i] = distance[i]
                     elif distance[i] < self.minDistances[i]:
                         self.minDistances[i] = distance[i]
-
+                    
                     # Normalize to range of servos [0,180]
                     normalized_distances = []
                     for j in range(nfingers):
@@ -701,6 +708,7 @@ class Worker(QThread):
                         
                         # Append the normalized value to the list
                         normalized_distances.append(int(normalized_value))
+                        print(normalized_distances)
                     
                 if self.counter > 1 and not self.counter % 50 == 0:
                     self.arduino.sendData(normalized_distances) # Send data to Arduino
