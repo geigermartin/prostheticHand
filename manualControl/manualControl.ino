@@ -92,7 +92,7 @@ void loop() {
       servoPos[2] = 0;
       servoPos[3] = 0;
       servoPos[4] = 180;
-      servoPos[5] = 180;    
+      servoPos[5] = 0;    
     }
     else if (arduinoIn.substring(2) == "Thumbs up>"){
       servoPos[0] = 180;
@@ -100,7 +100,7 @@ void loop() {
       servoPos[2] = 0;
       servoPos[3] = 0;
       servoPos[4] = 0;
-      servoPos[5] = 100;    
+      servoPos[5] = 90;    
     }
     else if (arduinoIn.substring(2) == "Point in direction>"){
       servoPos[0] = 60;
@@ -156,15 +156,7 @@ void loop() {
       servoPos[2] = 180;
       servoPos[3] = 0;
       servoPos[4] = 0;
-      servoPos[5] = 180;    
-    }
-    else if (arduinoIn.substring(2) == "Little finger up>"){
-      servoPos[0] = 60;
-      servoPos[1] = 0;
-      servoPos[2] = 0;
-      servoPos[3] = 0;
-      servoPos[4] = 180;
-      servoPos[5] = 180;    
+      servoPos[5] = 90;    
     }
     else if (arduinoIn.substring(2) == "Heavy metal>"){
       servoPos[0] = 60;
@@ -180,7 +172,7 @@ void loop() {
       servoPos[2] = 0;
       servoPos[3] = 0;
       servoPos[4] = 180;
-      servoPos[5] = 180;    
+      servoPos[5] = 140;    
     }
     else if (arduinoIn.substring(2) == "Rock>"){
       servoPos[0] = 60;

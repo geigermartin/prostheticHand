@@ -497,7 +497,7 @@ class MainWindow(QWidget):
         emg_layout.addWidget(self.labelEmgThresh,0,0,Qt.AlignmentFlag.AlignHCenter)
         self.sliderEmgThresh = QSlider(Qt.Orientation.Vertical, self)
         self.sliderEmgThresh.setMinimum(50)
-        self.sliderEmgThresh.setMaximum(300)
+        self.sliderEmgThresh.setMaximum(800)
         self.sliderEmgThresh.setValue(100)
         self.sliderEmgThresh.setStyleSheet(self.styleSliderThresh())
         self.sliderEmgThresh.valueChanged.connect(self.emgThresh)
@@ -524,11 +524,11 @@ class MainWindow(QWidget):
         self.timer.start()
 
     def emgThresh(self):
-        print("EMG threshold: "+str(self.sender().value()))
+        #print("EMG threshold: "+str(self.sender().value()))
         self.emgThreshold = self.sender().value()
         self.arduino.write(f't{self.emgThreshold:03d}>'.encode()) # <- uncomment to send data to Arduino. Doesn't work atm :(
         time.sleep(0.5)
-        print("EMG from Arduino"+self.arduino.readline().decode('ascii')) 
+        #print("EMG from Arduino"+self.arduino.readline().decode('ascii')) 
 
     def styleSliderThresh(self):
         return """

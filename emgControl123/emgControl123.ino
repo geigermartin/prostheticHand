@@ -1,5 +1,10 @@
 // How to attach EMG: https://electropeak.com/learn/interfacing-emg-muscular-signal-sensor-with-arduino/
 
+// Remember: To get the servo noise to a level this approach can handle ...
+// - ground laptop (connect to power supply)
+// - make sure all wires are connected properly
+// - sometimes necessary: stand up from chair, take off headphones
+
 // Choose whether to execute via Python GUI or Arduino IDE
 bool pyGUI = true;
 bool arIDE = false;
@@ -14,20 +19,18 @@ int maxT = 800;
 // Define variables
 int emgValue = 0;
 int emgFilt = 0;
-int threshold = map(100,0,1023,0,1023);
+int threshold = map(300,0,1023,0,1023);
 byte state = 1;
 byte nContractions = 2;
 unsigned long contractionStart;
 int plotCount = 0;
+bool waitTwoContraction = false;
+bool servoNoisePassed = false;
+bool servoNoiseStarted = false;
 
-// Filter settings
-float EMA_a_low = 0.01;
-float EMA_a_high = 0.7;
-int EMA_S_low = 0;
-int EMA_S_high = 0;
-int highpass = 0;
-int bandpass = 0;
-int applyFilter = 0;
+// Filter
+float EMA_a = 0.01;
+int EMA_S = 0;
 
 // LEDs (alternative to move servos because of currently unsolved noise problem)
 int pinOpen = 39;
@@ -57,8 +60,7 @@ void setup() {
   pinMode(pinSupination,OUTPUT);
   Serial.begin(9600);
   delay(100);
-  EMA_S_low = analogRead(0); //set EMA S for t=1
-  EMA_S_high = analogRead(0);
+  EMA_S = analogRead(0); //set EMA S for t=1
 }
 
 void loop() {
@@ -89,13 +91,18 @@ void loop() {
       }
       if (emgFilt < threshold){
         nContractions = 1;
-        switchState(state, nContractions);
+        waitTwoContraction = true;
       }
       if (emgFilt > threshold && nContractions == 1){
         nContractions = 2;
         switchState(state, nContractions);
-        delay((contractionStart + maxT) - millis());
+        //delay((contractionStart + maxT) - millis());
+        waitServoNoise();
         break;
+      }
+      if ((millis() == (contractionStart + maxT)) && waitTwoContraction){
+        switchState(state, nContractions);
+        waitTwoContraction = false;
       }
     }
     if (nContractions == 0){
@@ -173,31 +180,49 @@ int read(int threshold){
 }
 
 int filt(int emgValue){
-  EMA_S_low = (EMA_a_low*emgValue) + ((1-EMA_a_low)*EMA_S_low);  //run the EMA
-  EMA_S_high = (EMA_a_high*emgValue) + ((1-EMA_a_high)*EMA_S_high);
+  EMA_S = (EMA_a*emgValue) + ((1-EMA_a)*EMA_S);  //run the EMA
+  return EMA_S;
+}
 
-  highpass = emgValue - EMA_S_low; //find the high-pass as before (for comparison)
-  bandpass = EMA_S_high - EMA_S_low; //find the band-pass
-
-  applyFilter = EMA_S_low;  // Choose which filter will be applied. Return 'emgValue' to not apply any filter.
-  return applyFilter;
+void waitServoNoise(){
+  // With this function I wait for a 3rd suprathreshold value while being in the state of nContractions==2
+  // Reason: After state detection and servo command, the servos move which results in noise in the sensor readout.
+  // This noise leads to another (the 3rd) threshold crossing. As it is predictable however, I just wait for it here.
+  // If I wouldn't catch this, it would get interpreted as the next 'nContractions=1' event and would lead to the according action. 
+  servoNoisePassed = false;
+  while (servoNoisePassed == false){
+    if (pyGUI){
+      threshold = read(threshold);
+      emgValue = analogRead(A0);
+      emgFilt = filt(emgValue);
+    } 
+    if (arIDE){
+      emgValue = analogRead(A0);
+      emgFilt = filt(emgValue);
+      plot();
+    }
+    if (emgFilt > threshold){
+      servoNoiseStarted = true;
+    }
+    if (emgFilt < threshold && servoNoiseStarted){
+      servoNoisePassed = true;
+      servoNoiseStarted = false;
+    }
+    delay(1);
+  }
 }
 
 void plot(){
   plotCount++;
-  if (plotCount >= 500){
+  if (plotCount >= 200){
     if (pyGUI){
-      Serial.println(applyFilter);
+      Serial.println(EMA_S);
       Serial.print(",");
       Serial.println(threshold);
     } else if (arIDE){
       Serial.print(emgValue);
       Serial.print(" ");
-      Serial.print(EMA_S_low);
-      Serial.print(" ");
-      Serial.print(highpass);
-      Serial.print(" ");
-      Serial.print(bandpass);
+      Serial.print(EMA_S);
       Serial.print(" ");
       Serial.println(threshold);
     }
@@ -206,9 +231,8 @@ void plot(){
   return;
 }
 
-// In the following four functions, the servo's are moved according to the (via emg) chosen action.
-// At the moment there's too much servo noise while they are moving, so I can't read the emg signal anymore.
-// Therefore the state machine output is visualized with 4 LEDs right now, each representing one of the four possible states.
+// While I was having issues with servo noise in sensor data, I used LEDs to visualize the state machine.
+// Remove or comment out all digitalWrite commands in the following, to not use the LEDs.
 
 // Motion to set the servo into "open" position
 void handOpen(){
@@ -216,11 +240,11 @@ void handOpen(){
   digitalWrite(pinClosed,LOW);
   digitalWrite(pinPronation,LOW);
   digitalWrite(pinSupination,LOW);
-  //servoThumb.write(180);
-  //servoIndex.write(180);
-  //servoMiddle.write(180);
-  //servoRing.write(180);
-  //servoPinky.write(180);
+  servoThumb.write(180);
+  servoIndex.write(180);
+  servoMiddle.write(180);
+  servoRing.write(180);
+  servoPinky.write(180);
 }
 
 // Motion to set the servo into "closed" position
@@ -229,11 +253,11 @@ void handClosed(){
   digitalWrite(pinClosed,HIGH);
   digitalWrite(pinPronation,LOW);
   digitalWrite(pinSupination,LOW);
-  //servoThumb.write(85);
-  //servoIndex.write(100);
-  //servoMiddle.write(100);
-  //servoRing.write(100);
-  //servoPinky.write(100);
+  servoThumb.write(85);
+  servoIndex.write(100);
+  servoMiddle.write(100);
+  servoRing.write(100);
+  servoPinky.write(100);
 }
 
 void pronation(){
@@ -241,7 +265,7 @@ void pronation(){
   digitalWrite(pinClosed,LOW);
   digitalWrite(pinPronation,HIGH);
   digitalWrite(pinSupination,LOW);
-  //servoWrist.write(180);
+  servoWrist.write(180);
 }
 
 void supination(){
@@ -249,5 +273,5 @@ void supination(){
   digitalWrite(pinClosed,LOW);
   digitalWrite(pinPronation,LOW);
   digitalWrite(pinSupination,HIGH);
-  //servoWrist.write(120);
+  servoWrist.write(90);
 }
